@@ -22,7 +22,6 @@ months = {
   "december":  12
 }
 
-
 def make_ical(postal_code, housenumber, waste_types):
   housenumber_suffix = ""
   housenumber_re = re.search(r"^(\d+)(\D*)$", housenumber)
