@@ -7,6 +7,9 @@ WORKDIR /app
 RUN pip install --no-cache-dir -r requirements.txt && \
     rm requirements.txt
 
-COPY mijnafvalwijzer-to-ical.py .
+ENV HTTP_HOST 0.0.0.0
+ENV HTTP_PORT 9090
 
-ENTRYPOINT [ "python", "./mijnafvalwijzer-to-ical.py" ]
+EXPOSE $HTTP_PORT
+
+ENTRYPOINT ["python", "app.py"]

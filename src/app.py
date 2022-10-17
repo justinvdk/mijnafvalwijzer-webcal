@@ -1,4 +1,6 @@
-import sys
+#!/usr/bin/env python
+
+import os
 from urllib.parse import urlparse, parse_qs
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
@@ -16,14 +18,14 @@ class MijnAfvalWijzerHTTPRequestHandler(BaseHTTPRequestHandler):
       return
 
     query_params = parse_qs(url_params.query)
-    postal_code = "".join(query_params.get("postal_code", None))
-    housenumber = "".join(query_params.get("housenumber", None))
+    postal_code = "".join(query_params.get("postal_code", []))
+    housenumber = "".join(query_params.get("housenumber", []))
     waste_types = ",".join(query_params.get("waste_types", [])).split(",")
 
     errors = {}
-    if postal_code is None:
+    if postal_code == "":
       errors["postal_code"] = "Is missing."
-    if housenumber is None:
+    if housenumber == "":
       errors["housenumber"] = "Is missing."
 
     if len(errors.keys()) > 0:
@@ -51,12 +53,8 @@ class MijnAfvalWijzerHTTPRequestHandler(BaseHTTPRequestHandler):
     self.wfile.write(bytes(ical, "utf-8"))
 
 if __name__ == "__main__":
-  if len(sys.argv) < 2:
-    print("Usage {0} <hostname> <port>".format(sys.argv[0]))
-    exit(1)
-
-  hostname = sys.argv[1]
-  port = sys.argv[2]
+  hostname = os.environ["HTTP_HOST"]
+  port = os.environ["HTTP_PORT"]
   port = int(port)
 
   webServer = HTTPServer((hostname, port), MijnAfvalWijzerHTTPRequestHandler)
