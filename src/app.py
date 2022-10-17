@@ -21,6 +21,7 @@ class MijnAfvalWijzerHTTPRequestHandler(BaseHTTPRequestHandler):
     postal_code = "".join(query_params.get("postal_code", []))
     housenumber = "".join(query_params.get("housenumber", []))
     waste_types = ",".join(query_params.get("waste_types", [])).split(",")
+    waste_types = [waste_type for waste_type in waste_types if waste_type]
 
     errors = {}
     if postal_code == "":
