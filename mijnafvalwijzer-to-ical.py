@@ -22,42 +22,33 @@ months = {
   "december":  12
 }
 
-if len(sys.argv) < 2:
-    print("Usage {0} <postal code> <house number>".format(sys.argv[0]))
-    exit(1)
 
-postal_code = sys.argv[1]
-housenumber = sys.argv[2]
-housenumber_suffix = ""
-waste_types = []
+def make_ical(postal_code, housenumber, waste_types):
+  housenumber_suffix = ""
+  housenumber_re = re.search(r"^(\d+)(\D*)$", housenumber)
+  if housenumber_re.group():
+    housenumber = housenumber_re.group(1)
+    housenumber_suffix = housenumber_re.group(2) or ""
 
-if len(sys.argv) >= 4:
-  waste_types = sys.argv[3].split(",")
+  url = "https://www.mijnafvalwijzer.nl/nl/{0}/{1}/{2}".format(postal_code, housenumber, housenumber_suffix)
+  aw_html = requests.get(url)
 
-housenumber_re = re.search(r"^(\d+)(\D*)$", housenumber)
-if housenumber_re.group():
-  housenumber = housenumber_re.group(1)
-  housenumber_suffix = housenumber_re.group(2) or ""
+  aw = BeautifulSoup(aw_html.text, "html.parser")
 
-url = "https://www.mijnafvalwijzer.nl/nl/{0}/{1}/{2}".format(postal_code, housenumber, housenumber_suffix)
-aw_html = requests.get(url)
+  cal = Calendar()
+  cal.add("prodid", "-//{0}//NL".format(sys.argv[0]))
+  cal.add("version", "2.0")
+  cal.add("name", "Afvalkalender")
+  cal.add("x-wr-calname", "Afvalkalender")
+  cal.add("x-wr-timezone", "Europe/Amsterdam")
+  cal.add("description", aw.title.string)
+  cal.add("url", url)
 
-aw = BeautifulSoup(aw_html.text, "html.parser")
+  alarm = Alarm()
+  alarm.add("action", "DISPLAY")
+  alarm.add("trigger", value=timedelta(-1))
 
-cal = Calendar()
-cal.add("prodid", "-//{0}//NL".format(sys.argv[0]))
-cal.add("version", "2.0")
-cal.add("name", "Afvalkalender")
-cal.add("x-wr-calname", "Afvalkalender")
-cal.add("x-wr-timezone", "Europe/Amsterdam")
-cal.add("description", aw.title.string)
-cal.add("url", url)
-
-alarm = Alarm()
-alarm.add("action", "DISPLAY")
-alarm.add("trigger", value=timedelta(-1))
-
-for item in aw.find_all("a", "wasteInfoIcon textDecorationNone"):
+  for item in aw.find_all("a", "wasteInfoIcon textDecorationNone"):
     # Get the waste type from the fragment in the anchors href
     waste_type = item["href"].replace("#", "").replace("waste-", "")
     if waste_type == "" or waste_type == "javascript:void(0);":
@@ -80,4 +71,20 @@ for item in aw.find_all("a", "wasteInfoIcon textDecorationNone"):
 
       cal.add_component(event)
 
-print(cal.to_ical().decode("utf-8"))
+  return cal.to_ical().decode("utf-8")
+
+if __name__ == "__main__":
+  if len(sys.argv) < 2:
+    print("Usage {0} <postal code> <house number>".format(sys.argv[0]))
+    exit(1)
+
+  postal_code = sys.argv[1]
+  housenumber = sys.argv[2]
+  waste_types = []
+
+  if len(sys.argv) >= 4:
+    waste_types = sys.argv[3].split(",")
+
+  ical = make_ical(postal_code, housenumber, waste_types)
+
+  print(ical)
