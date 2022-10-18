@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
-import sys
+import os
 import re
 import requests
+import sys
 from datetime import datetime, date, timedelta
 from bs4 import BeautifulSoup
 from icalendar import Calendar, Event, Alarm
@@ -23,6 +24,9 @@ months = {
 }
 
 def make_ical(postal_code, housenumber, waste_types):
+  summary_format = os.getenv("MIJNAFVALWIJZER_SUMMARY_FORMAT", "Afval - {description}")
+  description_format = os.getenv("MIJNAFVALWIJZER_DESCRIPTION_FORMAT", "{description}")
+
   housenumber_suffix = ""
   housenumber_re = re.search(r"^(\d+)(\D*)$", housenumber)
   if housenumber_re.group():
@@ -57,15 +61,16 @@ def make_ical(postal_code, housenumber, waste_types):
     if not waste_types or waste_type in waste_types:
       raw_d = re.search("(\w+) (\d+) (\w+)", item.p.text)
       item_date = date(datetime.now().year, months.get(raw_d.group(3), 0), int(raw_d.group(2)))
-      item_descr = item.find("span", {"class": "afvaldescr"}).text
+      item_description = item.find("span", {"class": "afvaldescr"}).text
+      item_description = item_description.replace("\,", ",")
 
       event = Event()
       event.add("uid", "{0}-{1}-{2}".format(datetime.now().year, item_date.timetuple().tm_yday, waste_type))
       event.add("dtstamp", datetime.now())
       event.add("dtstart", item_date)
       event.add("dtend", item_date + timedelta(1))
-      event.add("summary", "Afval - {0}".format(item_descr.replace("\,", ",")))
-      event.add("description", item_descr.replace("\,", ","))
+      event.add("summary", summary_format.format(description = item_description))
+      event.add("description", description_format.format(description = item_description))
       event.add_component(alarm)
 
       cal.add_component(event)

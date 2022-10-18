@@ -54,8 +54,8 @@ class MijnAfvalWijzerHTTPRequestHandler(BaseHTTPRequestHandler):
     self.wfile.write(bytes(ical, "utf-8"))
 
 if __name__ == "__main__":
-  hostname = os.environ["HTTP_HOST"]
-  port = os.environ["HTTP_PORT"]
+  hostname = os.getenv("HTTP_HOST", "127.0.0.1")
+  port = os.getenv("HTTP_PORT", 9090)
   port = int(port)
 
   webServer = HTTPServer((hostname, port), MijnAfvalWijzerHTTPRequestHandler)
