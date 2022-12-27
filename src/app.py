@@ -4,6 +4,7 @@ import os
 from urllib.parse import urlparse, parse_qs
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
+from datetime import datetime
 
 # Use __import__ due to illegal characters for with with import.
 mijnafvalwijzer_to_ical = __import__("mijnafvalwijzer-to-ical")
@@ -49,7 +50,30 @@ class MijnAfvalWijzerHTTPRequestHandler(BaseHTTPRequestHandler):
     self.send_header("Content-type", "text/calendar")
     self.end_headers()
 
-    ical = mijnafvalwijzer_to_ical.make_ical(postal_code, housenumber, waste_types)
+    housenumber, housenumber_suffix = mijnafvalwijzer_to_ical.destruct_housenumber(housenumber)
+
+    address_metadatas = mijnafvalwijzer_to_ical.get_address_metadata(postal_code, housenumber)
+    address_metadatas = list(filter(lambda metadata: metadata['huisletter'] == housenumber_suffix, address_metadatas))
+
+    if len(address_metadatas) != 1:
+      raise f'ambiguous postal_code and housenumber combination. Found {len(address_metadatas)} matches, expecting 1.'
+
+    address_metadata = address_metadatas[0]
+
+    now = datetime.now()
+    current_year = now.year
+
+    calendar = []
+    # Get prev. year in januari.
+    if now.month == 1:
+      calendar = calendar + mijnafvalwijzer_to_ical.get_calendar(address_metadata['bagid'], current_year - 1)
+    # Get current year data.
+    calendar = calendar + mijnafvalwijzer_to_ical.get_calendar(address_metadata['bagid'], current_year)
+    # Get next year in december.
+    if now.month == 12:
+      calendar = calendar + mijnafvalwijzer_to_ical.get_calendar(address_metadata['bagid'], current_year + 1)
+
+    ical = mijnafvalwijzer_to_ical.make_ical(address_metadata, calendar)
 
     self.wfile.write(bytes(ical, "utf-8"))
 
