@@ -1,5 +1,7 @@
-# iCalendar voor MijnAfvalwijzer.nl
-De dienst MijnAfvalwijzer.nl wordt door veel gemeenten gebruikt voor het informeren over de ophaaltijden van het afval.
+LET OP: Dit project is overgestapt op gebruik van afval3xbeter.nl.
+
+# iCalendar voor ~~MijnAfvalwijzer.nl~~ afval3xbeter.nl
+De dienst ~~MijnAfvalwijzer.nl~~ wordt door veel gemeenten gebruikt voor het informeren over de ophaaltijden van het afval.
 De ophaaltijden staan per maand overzichtelijk op de website en er is een app.
 Helaas biedt MijnAfvalwijzer.nl niet een iCal kalender feed waarmee het ophaalschema overzichtelijk in je favoriete kalender app wordt getoond.
 
