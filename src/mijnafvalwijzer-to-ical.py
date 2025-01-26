@@ -66,7 +66,10 @@ def make_ical(address_metadata, calendar_data):
 
   alarm = Alarm()
   alarm.add("action", "DISPLAY")
-  alarm.add("trigger", value=timedelta(-1))
+  alarm.add("description", "Kliko op straat")
+  alarm.add("trigger", timedelta(-1))
+
+  max_item_date_event = None
 
   for calendar_item_data in calendar_data:
     waste_type = calendar_item_data["afvalstroom_id"]
@@ -75,6 +78,11 @@ def make_ical(address_metadata, calendar_data):
     item_description = all_waste_types_metadata[calendar_item_data['afvalstroom_id']]['title']
 
     event = Event()
+
+    # Remember last item.
+    if max_item_date_event is None or max_item_date_event["dtstart"].dt < item_date:
+      max_item_date_event = event
+
     event.add("uid", "{0}-{1}-{2}".format(item_date.year, item_date.timetuple().tm_yday, waste_type))
     event.add("dtstamp", now)
     event.add("dtstart", item_date)
@@ -84,6 +92,23 @@ def make_ical(address_metadata, calendar_data):
     event.add_component(alarm)
 
     cal.add_component(event)
+
+  # To be sure, lets not assume empty.
+  if max_item_date_event is None:
+    max_item_date_event = Event()
+    max_item_date_event.add("uid", "nothingfound")
+    max_item_date_event.add("dtstamp", now)
+    max_item_date_event.add("dtstart", now)
+    max_item_date_event.add("dtend", now + timedelta(1))
+    max_item_date_event.add("summary", "WARNING - NO EVENTS FOUND")
+    max_item_date_event.add("description", "WARNING - NO EVENTS FOUND")
+    max_item_date_event.add_component(alarm)
+    cal.add_component(max_item_date_event)
+  else:
+    # We've seen it all, lets update the description of the last seen item (chronologically).
+    max_item_date_event["summary"] = f'[LAST] {max_item_date_event["summary"]}'
+    max_item_date_event["description"] = f'[LAST] {max_item_date_event["description"]}'
+
 
   return cal.to_ical().decode("utf-8")
 
