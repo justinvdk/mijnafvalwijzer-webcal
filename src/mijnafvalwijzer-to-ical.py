@@ -80,13 +80,12 @@ def make_ical(address_metadata, calendar_data):
     event = Event()
 
     # Remember last item.
-    if max_item_date_event is None or max_item_date_event["dtstart"].dt < item_date:
+    if max_item_date_event is None or max_item_date_event["dtstart"].dt < item_date.date():
       max_item_date_event = event
 
     event.add("uid", "{0}-{1}-{2}".format(item_date.year, item_date.timetuple().tm_yday, waste_type))
     event.add("dtstamp", now)
-    event.add("dtstart", item_date)
-    event.add("dtend", item_date + timedelta(1))
+    event.add("dtstart", item_date.date())
     event.add("summary", summary_format.format(description = item_description))
     event.add("description", description_format.format(description = item_description))
     event.add_component(alarm)
@@ -98,8 +97,7 @@ def make_ical(address_metadata, calendar_data):
     max_item_date_event = Event()
     max_item_date_event.add("uid", "nothingfound")
     max_item_date_event.add("dtstamp", now)
-    max_item_date_event.add("dtstart", now)
-    max_item_date_event.add("dtend", now + timedelta(1))
+    max_item_date_event.add("dtstart", now.date())
     max_item_date_event.add("summary", "WARNING - NO EVENTS FOUND")
     max_item_date_event.add("description", "WARNING - NO EVENTS FOUND")
     max_item_date_event.add_component(alarm)
